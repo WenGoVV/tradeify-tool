@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tradeify Growth 風控計算器</title>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+
+body{
+    font-family: Arial;
+    padding:20px;
+    background:#f5f5f5;
+}
+
+.box{
+    background:#fff;
+    border:1px solid #ccc;
+    padding:20px;
+    margin-bottom:20px;
+    max-width:700px;
+}
+
+input,select{
+    width:100%;
+    padding:8px;
+    margin-bottom:10px;
+    box-sizing:border-box;
+}
+
+button{
+    padding:10px 20px;
+    cursor:pointer;
+}
+
+.result{
+    background:#f0f0f0;
+    padding:15px;
+    margin-top:15px;
+}
+
+.title{
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:15px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- ========================= -->
+<!-- 35% RULE -->
+<!-- ========================= -->
+
+<div class="box">
+
+<div class="title">
+Tradeify 35% Rule 計算器
+</div>
+
+Day1：
+<input type="text" id="d1" value="0">
+
+Day2：
+<input type="text" id="d2" value="0">
+
+Day3：
+<input type="text" id="d3" value="0">
+
+Day4：
+<input type="text" id="d4" value="0">
+
+Day5：
+<input type="text" id="d5" value="0">
+
+<button onclick="calc35()">計算35% Rule</button>
+
+<div class="result" id="result35"></div>
+
+</div>
+
+<!-- ========================= -->
+<!-- FUTURES CALCULATOR -->
+<!-- ========================= -->
+
+<div class="box">
+
+<div class="title">
+商品期貨損益計算器
+</div>
+
+商品：
+
+<select id="symbol">
+    <option value="MGC">微型黃金 MGC</option>
+    <option value="MCL">小原油 MCL</option>
+    <option value="MNQ">微型NQ MNQ</option>
+</select>
+
+方向：
+
+<select id="side">
+    <option value="long">做多</option>
+    <option value="short">做空</option>
+</select>
+
+進場價格：
+<input type="text" id="entry">
+
+停損價格：
+<input type="text" id="sl">
+
+停利價格：
+<input type="text" id="tp">
+
+口數：
+<input type="text" id="qty" value="1">
+
+<button onclick="calcFutures()">計算期貨損益</button>
+
+<div class="result" id="resultFuture"></div>
+
+</div>
+
+<script>
+
+function calc35()
+{
+    var d1 = parseFloat($("#d1").val());
+    var d2 = parseFloat($("#d2").val());
+    var d3 = parseFloat($("#d3").val());
+    var d4 = parseFloat($("#d4").val());
+    var d5 = parseFloat($("#d5").val());
+
+    if(isNaN(d1)){d1=0;}
+    if(isNaN(d2)){d2=0;}
+    if(isNaN(d3)){d3=0;}
+    if(isNaN(d4)){d4=0;}
+    if(isNaN(d5)){d5=0;}
+
+    var total = d1 + d2 + d3 + d4 + d5;
+
+    var maxDay = Math.max(d1,d2,d3,d4,d5);
+
+    var limit35 = total * 0.35;
+
+    var needTotal = 0;
+
+    if(maxDay > 0)
+    {
+        needTotal = maxDay / 0.35;
+    }
+
+    var html = "";
+
+    html += "📊 目前總獲利：$" + total.toFixed(2) + "<br><br>";
+
+    html += "📈 最大單日獲利：$" + maxDay.toFixed(2) + "<br>";
+
+    html += "⚠ 35%限制：$" + limit35.toFixed(2) + "<br><br>";
+
+    html += "🎯 此最大單日所需總獲利：<br>";
+    html += "$" + needTotal.toFixed(2) + "<br><br>";
+
+    if(maxDay <= limit35)
+    {
+        html += "✔ 符合35% Rule";
+    }
+    else
+    {
+        html += "❌ 不符合35% Rule";
+    }
+
+    $("#result35").html(html);
+}
+
+function calcFutures()
+{
+    var symbol = $("#symbol").val();
+
+    var side = $("#side").val();
+
+    var entry = parseFloat($("#entry").val());
+
+    var sl = parseFloat($("#sl").val());
+
+    var tp = parseFloat($("#tp").val());
+
+    var qty = parseFloat($("#qty").val());
+
+    if(isNaN(entry) || isNaN(sl) || isNaN(tp) || isNaN(qty))
+    {
+        $("#resultFuture").html("請輸入完整資料");
+        return;
+    }
+
+    var pointValue = 1;
+
+    if(symbol == "MGC")
+    {
+        pointValue = 10;
+    }
+
+    if(symbol == "MCL")
+    {
+        pointValue = 100;
+    }
+
+    if(symbol == "MNQ")
+    {
+        pointValue = 2;
+    }
+
+    var stopLoss = 0;
+
+    var takeProfit = 0;
+
+    if(side == "long")
+    {
+        stopLoss = (sl - entry) * pointValue * qty;
+        takeProfit = (tp - entry) * pointValue * qty;
+    }
+    else
+    {
+        stopLoss = (entry - sl) * pointValue * qty;
+        takeProfit = (entry - tp) * pointValue * qty;
+    }
+
+    var html = "";
+
+    html += "📌 商品：" + symbol + "<br>";
+
+    html += "📊 方向：" + side + "<br>";
+
+    html += "📦 口數：" + qty + "<br><br>";
+
+    html += "❌ 停損金額：$" + stopLoss.toFixed(2) + "<br>";
+
+    html += "🎯 停利金額：$" + takeProfit.toFixed(2) + "<br><br>";
+
+    var rr = 0;
+
+    if(Math.abs(stopLoss) > 0)
+    {
+        rr = Math.abs(takeProfit / stopLoss);
+    }
+
+    html += "📈 風報比：1 : " + rr.toFixed(2);
+
+    $("#resultFuture").html(html);
+}
+
+</script>
+
+</body>
+</html>
